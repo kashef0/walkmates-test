@@ -10,6 +10,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+import static org.mockito.ArgumentMatchers.doubleThat;
 
 /**
  * Lab 2, Part A — structural testing for {@link PricingCalculator} (FR-4.3).
@@ -45,7 +47,36 @@ class PricingCalculatorStructuralTest {
     }
 
     // TODO (branch): a free SHELTER_VOLUNTEER listing always costs 0.00.
+    @Test 
+    @DisplayName("SHELTER_VOLUNTEER listing always costs 0.00 regardless of duration or tier")
+    void shelterVolunteer_isAlwaysFree() {
+        Booking booking = new Booking("seeker-1", "listing-1", 120);
+
+        double price = pricing.priceFor(booking, listing(ListingType.SHELTER_VOLUNTEER), seeker(TrustTier.NEW));
+
+        assertThat(price).isEqualTo(0.00);
+    }
     // TODO (branch): a clearly-overnight booking (e.g. 600 min) includes the 20% surcharge.
+    @Test
+    @DisplayName("600 min booking > 480 includes 20% overnight surcharge")
+    void overnightBooking_includes20PercentSurcharge() {
+        Booking booking = new Booking("seeker-1", "listing-1", 600);
+
+        double price = pricing.priceFor(booking, listing(ListingType.DOG_WALK), seeker(TrustTier.VERIFIED));
+
+        assertThat(price).isCloseTo(1075.20 , within(0.01));
+    }
+
     // TODO (BOUNDARY — this is the interesting one): a booking of exactly 480 minutes must NOT
     //      be surcharged (FR-4.3 says strictly > 480). Write this test and see what happens.
+    @Test 
+    @DisplayName("Boundary Test: Exactly 480 minutes must NOT receive overnight surcharge (FR-4.3)")
+    void boundaryTest_480Minutes_noOvernightSurcharge() {
+        Booking booking = new Booking("seeker-1", "listing-1", 480);
+
+        double price = pricing.priceFor(booking, listing(ListingType.DOG_WALK), seeker(TrustTier.VERIFIED));
+
+        assertThat(price).isCloseTo(716.80, within(0.01));
+    }
+
 }
