@@ -26,9 +26,9 @@ class PricingCalculatorStructuralTest {
     private final PricingCalculator pricing = new PricingCalculator();
 
     private Seeker seeker(TrustTier tier) {
-        Seeker s = new Seeker("p@example.com", "Pat", "0701112233");
-        s.setTrustTier(tier);
-        return s;
+        Seeker seeker = new Seeker("p@example.com", "Pat", "0701112233");
+        seeker.setTrustTier(tier);
+        return seeker;
     }
 
     private Listing listing(ListingType type) {
