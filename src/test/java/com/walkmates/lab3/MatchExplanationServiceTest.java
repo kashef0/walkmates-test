@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -99,6 +100,45 @@ class MatchExplanationServiceTest {
         assertThat(text).isGreaterThan(start);
         assertThat(text).isLessThan(end);
     }
+
+    @Test
+    @DisplayName("explainMatch falls back when the LLM times out")
+    void fallsBackOnLlmTimeout() throws Exception {
+        LlmClient llm = mock(LlmClient.class);
+        when(llm.complete(org.mockito.ArgumentMatchers.anyString()))
+                .thenThrow(new LlmClient.LlmTimeoutException("too slow"));
+        MatchExplanationService service = new MatchExplanationService(llm);
+
+        String result = service.explainMatch(seeker(), listing("Friendly dog"));
+
+        assertThat(result).isEqualTo("This DOG_WALK opportunity \"Walk Rex\" is a good fit for a NEW seeker.");
+    }
+    @Test
+    @DisplayName("explainMatch falls back when the LLM returns null")
+    void fallsBackOnLlmIsNull() throws Exception {
+        LlmClient llm = mock(LlmClient.class);
+        when(llm.complete(org.mockito.ArgumentMatchers.anyString()))
+                .thenReturn(null);
+        MatchExplanationService service = new MatchExplanationService(llm);
+
+        String result = service.explainMatch(seeker(), listing("Friendly dog"));
+
+        assertThat(result).isEqualTo("This DOG_WALK opportunity \"Walk Rex\" is a good fit for a NEW seeker.");
+    }
+    @Test
+    @DisplayName("explainMatch falls back when the LLM returns a blank response")
+    void fallsBackOnLlmIsEmpty() throws Exception {
+        LlmClient llm = mock(LlmClient.class);
+        when(llm.complete(org.mockito.ArgumentMatchers.anyString()))
+                .thenReturn(" ");
+        MatchExplanationService service = new MatchExplanationService(llm);
+
+        String result = service.explainMatch(seeker(), listing("Friendly dog"));
+
+        assertThat(result).isEqualTo("This DOG_WALK opportunity \"Walk Rex\" is a good fit for a NEW seeker.");
+    }
+
+    
 
 
 }
