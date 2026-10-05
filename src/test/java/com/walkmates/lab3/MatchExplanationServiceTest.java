@@ -68,4 +68,37 @@ class MatchExplanationServiceTest {
     // TODO (MR-1): adding an irrelevant sentence to the listing description must not change
     //      recommendBestMatch's chosen listing.
     // TODO (MR-2): shuffling the candidate list must not change the chosen listing.
+
+    @Test
+    @DisplayName("buildPrompt includes the base rate and the title")
+    void promptIncludesRateAndTitle() {
+        MatchExplanationService service = new MatchExplanationService(mock(LlmClient.class));
+
+        String prompt = service.buildPrompt(seeker(), listing("friendly dog"));
+        assertThat(prompt).contains("Listing base rate (SEK/hour): " + 80.0);
+        assertThat(prompt).contains("Listing title: " + "Walk Rex");
+
+    }
+
+    @Test
+    @DisplayName("buildPrompt places the description inside the data delimiters")
+    void descriptionIsInsideDataBlock() {
+        MatchExplanationService service = new MatchExplanationService(mock(LlmClient.class));
+        String description = "Rex loves long walks in the park";
+
+        String prompt = service.buildPrompt(seeker(), listing(description));
+
+        assertThat(prompt).contains("<<<LISTING_DESCRIPTION_DATA");
+        assertThat(prompt).contains(description);
+        assertThat(prompt).contains("LISTING_DESCRIPTION_DATA>>>");
+        
+        int start = prompt.indexOf("<<<LISTING_DESCRIPTION_DATA");
+        int text  = prompt.indexOf(description);
+        int end   = prompt.indexOf("LISTING_DESCRIPTION_DATA>>>");
+
+        assertThat(text).isGreaterThan(start);
+        assertThat(text).isLessThan(end);
+    }
+
+
 }
