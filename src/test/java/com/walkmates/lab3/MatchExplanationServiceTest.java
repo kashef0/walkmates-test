@@ -10,9 +10,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
+import static org.mockito.Mockito.description;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 /**
  * Lab 3, Part A — testing the AI "explain this match" feature without a live LLM.
@@ -136,6 +142,43 @@ class MatchExplanationServiceTest {
         String result = service.explainMatch(seeker(), listing("Friendly dog"));
 
         assertThat(result).isEqualTo("This DOG_WALK opportunity \"Walk Rex\" is a good fit for a NEW seeker.");
+    }
+
+    @Test
+    @DisplayName("MR-1: an irrelevant sentence in a description does not change the chosen listing")
+    void mr1IrrelevantDetailDoesNotChangeChoice() {
+        MatchExplanationService service = new MatchExplanationService(mock(LlmClient.class));
+        Listing walk  = new Listing("provider-1", "Walk Rex", "Friendly dog", ListingType.DOG_WALK);
+        Listing house = new Listing("provider-2", "Watch my house", "Two calm cats", ListingType.HOUSE_SITTING);
+        List<Listing> candidates = List.of(walk, house);
+
+        Listing first = service.recommendBestMatch(seeker(), candidates);
+
+        house.setDescription(house.getDescription() + " No thing is important");
+
+        Listing second = service.recommendBestMatch(seeker(), candidates);
+
+        assertThat(second.getId()).isEqualTo(first.getId());
+    }
+    @Test
+    @DisplayName("MR-1: an irrelevant sentence in a description does not change the chosen listing")
+    void mr1IrrelevantDetailDoesNotChange() {
+        MatchExplanationService service = new MatchExplanationService(mock(LlmClient.class));
+        Listing walk  = new Listing("provider-1", "Walk Rex", "Friendly dog", ListingType.DOG_WALK);
+        Listing walkA  = new Listing("provider-2", "Walk Rex", "Friendly dog", ListingType.DOG_WALK);
+        Listing house = new Listing("provider-3", "Watch my house", "Two calm cats", ListingType.HOUSE_SITTING);
+        List<Listing> candidates = List.of(walk, walkA, house);
+
+        Listing first = service.recommendBestMatch(seeker(), candidates);
+
+        house.setDescription(house.getDescription() + " No thing is important");
+
+        
+        List<Listing> shuffledList = new ArrayList<>(candidates);
+        Collections.shuffle(shuffledList, new Random(30));
+        
+        Listing second = service.recommendBestMatch(seeker(), shuffledList);
+        assertThat(second.getId()).isEqualTo(first.getId());
     }
 
     
